@@ -10,9 +10,10 @@ public:
     {
         int initSideLength = getParentHeight();
         sideLength = initSideLength;
-        
-        setBounds(0, 0, sideLength, sideLength);
-        auto bounds = getLocalBounds().reduced(20);
+        setSize(sideLength, sideLength);
+        float parentSideRatio = getParentWidth() / getParentHeight();
+        setBoundsRelative(0.0f, 0.0f, parentSideRatio, 1.0f);
+        juce::Rectangle<int> bounds = getBoundsInParent().reduced(5);
         constrainer.setSizeLimits(bounds.getY(),
                                   bounds.getX(),
                                   bounds.getWidth(),
@@ -20,19 +21,14 @@ public:
         constrainer.setMinimumOnscreenAmounts(0xffffff, 0xffffff, 0xffffff, 0xffffff);
         printf("Start X: %d\n", getX());
         printf("Start Y: %d\n", getY());
-        setTopLeftPosition(getX(), getY() + sideLength);
-        setSize(sideLength, sideLength);
+        setTopLeftPosition(0, 0);
     }
     ~DragComponent() override
     {
     }
-    int getCenterX()
+    void moved() override
     {
-        return getX() + (sideLength / 2);
-    }
-    int getCenterY()
-    {
-        return getY() + (sideLength / 2);
+    
     }
     void resized() override
     {
@@ -53,9 +49,10 @@ public:
     {
     dragger.dragComponent(this, event, &constrainer);
     }
-    int sideLength;
+    
 private:
     bool firstDragLoop = true;
+    int sideLength;
     juce::ComponentDragger dragger;
     juce::ComponentBoundsConstrainer constrainer;
 };
@@ -66,13 +63,14 @@ public:
     DragRangeRect(int ix, int iy, int iwidth, int iheight)
     {
         addAndMakeVisible(dragger);
+        
         x = ix;
         y = iy;
         width = iwidth;
         height = iheight;
         setBounds(x, y, width, height);
         dragger.setBounds(x, y, height, height);
-        dragger.setAlwaysOnTop(true);
+        dragger.setTopLeftPosition(0, 0);
     }
     ~DragRangeRect()
     {}
@@ -83,35 +81,16 @@ public:
         width = iwidth;
         height = iheight;
         setBounds(x, y, width, height);
-    }
-    void setColor(juce::Colour color)
-    {
-        backgroundColor = color;
+        dragger.setBounds(x, y, height, height);
+        dragger.setTopLeftPosition(0, 0);
     }
     void paint(juce::Graphics &g) override
     {
-        g.fillAll(backgroundColor);
-        g.setColour(juce::Colours::black);
-        juce::Rectangle<int> draggerBox = dragger.getBounds();
-        g.fillRect(draggerBox);
-    }
-    //returns the x position of the dragger as a percentage of its range
-    float getXValueFloat()
-    {
-        float usableWidth = (float)width  - dragger.sideLength;
-        float x = dragger.getCenterX();
-        return x / usableWidth;
-    }
-    float getYValueFloat()
-    {
-        float usableHeight = (float)height  - dragger.sideLength;
-        float y = dragger.getCenterY();
-        return y / usableHeight;
+        g.fillAll(juce::Colours::white);
     }
 private:
     int x, y, width, height;
     DragComponent dragger;
-    juce::Colour backgroundColor;
 };
 
 

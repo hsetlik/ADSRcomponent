@@ -1,7 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "ADSR.h"
+#include "DraggersOnly.h"
 
 //==============================================================================
 /*
@@ -15,7 +15,6 @@ public:
     MainComponent()
     {
         addAndMakeVisible(envelope);
-        
         setSize (400, 300);
 
         // Some platforms require permissions to open input channels so request that here
@@ -90,7 +89,7 @@ public:
 private:
     //==============================================================================
     // Your private member variables go here...
-    ADSR envelope;
+    DraggerGroup envelope;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };

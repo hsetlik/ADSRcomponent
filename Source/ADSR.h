@@ -22,24 +22,13 @@ class ADSR  : public juce::Component
 public:
     //note: the constructor explicitly initializes the draggers with the correct vectors,
     // but the contents of the vectors are not yet set
-    ADSR() : aDragger(aRectV[0], aRectV[1], aRectV[2], aRectV[3]),
-             dDragger(dRectV[0], dRectV[1], dRectV[2], dRectV[3]),
-             sDragger(aRectV[0], sRectV[1], sRectV[2], sRectV[3]),
-             rDragger(aRectV[0], rRectV[1], rRectV[2], rRectV[3])
+    ADSR() : aDragger(aRectV[0], aRectV[1], aRectV[2], aRectV[3])
+
     {
-        addAndMakeVisible(aDragger);
-        addAndMakeVisible(dDragger);
-        addAndMakeVisible(sDragger);
-        addAndMakeVisible(rDragger);
         
-        aDragger.setColor(juce::Colours::orange);
         
-        dDragger.setColor(juce::Colours::lightblue);
-        sDragger.setColor(juce::Colours::green);
-        rDragger.setColor(juce::Colours::pink);
         
         setSize(400, 250);
-        calculateGlobalPoints();
     }
 
     ~ADSR() override
@@ -48,60 +37,29 @@ public:
     
     void calculateGlobalPoints()
     {
-        peakPoint = juce::Point<float>(aTime, getHeight() - (getHeight() * 0.8));
-        sustainStartPoint = juce::Point<float>(aTime + dTime, getHeight() - (getHeight() * sLevel));
-        releaseStartTime = aTime + dTime + (getWidth() / 5.0);
-        sustainEndPoint = juce::Point<float>(releaseStartTime, getHeight() - (getHeight() * sLevel));
-        sustainCenterX = (sustainStartPoint.getX() + sustainEndPoint.getY()) / 2.0;
-        sustainCenterPoint = juce::Point<float> (sustainCenterX, getHeight() - (getHeight() * sLevel));
-        float spaceRemaining = getWidth() - releaseStartTime;
-        float endX = (rTime * spaceRemaining) / 100.0;
-        endPoint = juce::Point<float> (endX, getHeight());
-        //now we actually set values for the rectangle vectors
         
-        //setting max X values that add up to 0.85 so that the minimum sustain length is 15% of the window width
-        int attackMax = getWidth() * 0.2;
-        int decayMax = getWidth() * 0.25;
-        int releaseMax = getWidth() * 0.4;
-        //multiply those max values by the percentage to the left of its range of the drag point
-        int xAttackCurrent = (aTime / 100) * attackMax;
-        int xDecayCurrent = attackMax - (dDragger.getXValueFloat() * decayMax);
-        int xReleaseEndCurrent = getWidth() - (rDragger.getXValueFloat() * releaseMax);
-        //getting the sustain width from the remaing width left by those three
-        int sustainWidth = getWidth() - (xDecayCurrent + xReleaseEndCurrent);
-        // now to find the y values
-        int sustainTopY = getHeight() - (getHeight() * 0.4);
-        int peakY = getHeight() - (getHeight() * 0.8);
-        //now to actually assign things to the vectors
-        aRectV = {0, peakY, attackMax, getHeight() / 12};
-        dRectV = {xAttackCurrent, getHeight() - (getHeight() / (int)(1 / sLevel)), decayMax, getHeight() / 12};
-        sRectV = {xDecayCurrent, 0, sustainWidth, getHeight()};
-        rRectV = {xDecayCurrent + sustainWidth,
-            11 * (getHeight() / 12),
-            xReleaseEndCurrent - (xDecayCurrent + sustainWidth),
-            getHeight() / 12};
-        //sending these back to the dragger objects
-        aDragger.reInit(aRectV[0], aRectV[1], aRectV[2], aRectV[3]);
-        dDragger.reInit(dRectV[0], dRectV[1], dRectV[2], dRectV[3]);
-        sDragger.reInit(sRectV[0], sRectV[1], sRectV[2], sRectV[3]);
-        rDragger.reInit(rRectV[0], rRectV[1], rRectV[2], rRectV[3]);
     }
 
     void paint (juce::Graphics& g) override
     {
         //recalculate the global points before doing anything
-        calculateGlobalPoints();
-
+        
+        g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
     }
     
     void mouseDown(juce::MouseEvent &event)
     {
-        repaint();
+        //repaint();
+        for(int i = 0; i < 4; ++i)
+        {
+            printf("%d ", aRectV[i]);
+        }
+        printf("\n");
     }
 
     void resized() override
     {
-        repaint();
+        aDragger.resized();
     }
 
 private:
@@ -134,9 +92,7 @@ private:
     
     //the dragger objects themselves
     DragRangeRect aDragger;
-    DragRangeRect dDragger;
-    DragRangeRect sDragger;
-    DragRangeRect rDragger;
+    
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ADSR)
 };
