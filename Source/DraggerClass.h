@@ -66,7 +66,24 @@ private:
     juce::Colour setColor = juce::Colours::blue;
 };
 
+class NodeWatcher : public juce::ComponentMovementWatcher
+{
+public:
+    NodeWatcher() : juce::ComponentMovementWatcher(nodeToWatch)
+    {
+        nodeToWatch = chosenNode;
+    }
+    ~NodeWatcher() {};
+    void setNode(DragNode* chosenNode)
+    {
+        nodeToWatch = chosenNode;
+    }
+private:
+    DragNode* nodeToWatch;
+};
+
 class DragNodeContainer : public juce::Component
+                          
 {
 public:
     DragNodeContainer(int ix, int iy, int iwidth, int iheight)
@@ -98,9 +115,9 @@ public:
         dragNode.setBounds(getX(), getY(), getHeight(), getHeight());
         dragNode.setTopLeftPosition(0, 0);
     }
-    void setXPosFromSibling(int* xInput)
+    void setNodeToWatch(DragNode* chosenNode)
     {
-        
+        nodeToWatch = chosenNode;
     }
     void setNodeColor(juce::Colour inputColor)
     {
@@ -115,10 +132,10 @@ public:
         printf ("X set to: %d\n", dragNode.getCenterX() - x);
         return (dragNode.getCenterX() - x);
     }
+    DragNode dragNode;
 private:
     int xOutput;
     int x, y, width, height;
-    DragNode dragNode;
 };
 
 
