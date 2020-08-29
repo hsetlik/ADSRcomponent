@@ -107,6 +107,7 @@ public:
     void addPeer(DraggerContainer* peer, side limitSide)
     {
         peerSide = limitSide;
+        peerCont = peer;
         switch(limitSide)
         {
             case top:
