@@ -1,12 +1,12 @@
 #pragma once
-
 #include <JuceHeader.h>
+
 #include <stdio.h>
 
-class DragNode : public juce::Component
+class DragPoint : public juce::Component
 {
 public:
-    DragNode()
+    DragPoint()
     {
         int initSideLength = getParentHeight();
         sideLength = initSideLength;
@@ -20,22 +20,10 @@ public:
                                   bounds.getHeight());
         constrainer.setMinimumOnscreenAmounts(0xffffff, 0xffffff, 0xffffff, 0xffffff);
         setTopLeftPosition(0, 0);
+        updateReturnPoints();
     }
-    ~DragNode() override
-    {
-    }
-    void moved() override
-    {
-    
-    }
-    int getCenterX()
-    {
-        return getX() + (sideLength / 2);
-    }
-    int getCenterY()
-    {
-        return getY() + (sideLength / 2);
-    }
+    ~DragPoint() override
+    {}
     void resized() override
     {
         sideLength = getParentHeight();
@@ -45,19 +33,29 @@ public:
     {
         g.fillAll(setColor);
     }
+    void updateReturnPoints()
+    {
+        leftX = getX();
+        topY = getY();
+        centerX = getX() + (getHeight() / 2);
+        centerY = getY() + (getHeight() / 2);
+        bottomY = getY() + getHeight();
+        rightX = getX() + getHeight();
+    }
     void mouseDown(const juce::MouseEvent &event) override
     {
         dragger.startDraggingComponent(this, event);
     }
     void mouseDrag(const juce::MouseEvent &event) override
     {
-    dragger.dragComponent(this, event, &constrainer);
+        dragger.dragComponent(this, event, &constrainer);
+        updateReturnPoints();
     }
     void assignColor(juce::Colour inputColor)
     {
         setColor = inputColor;
     }
-    
+    int centerX, centerY, leftX, rightX, topY, bottomY;
 private:
     bool firstDragLoop = true;
     int sideLength;
@@ -66,89 +64,129 @@ private:
     juce::Colour setColor = juce::Colours::blue;
 };
 
-class NodeWatcher : public juce::ComponentMovementWatcher
+class DraggerContainer : public juce::Component
 {
 public:
-    NodeWatcher(DragNode* chosenNode) : juce::ComponentMovementWatcher(chosenNode)
+    enum side {top, right, bottom, left};
+    
+    const char* getSideName(side enumVal)
     {
-        nodeToWatch = chosenNode;
+        switch(enumVal)
+        {
+            case top:
+                return "top";
+            case right:
+                return "right";
+            case bottom:
+                return "bottom";
+            case left:
+                return "left";
+        }
     }
-    ~NodeWatcher() {};
-    void componentMovedOrResized(juce::Component &component, bool wasMoved, bool wasResized) override
+    
+    DraggerContainer()
     {
-        juce::Rectangle<int> targetBounds = component.getBounds();
-        int width = targetBounds.getWidth();
-        watchedXLeft = component.getX();
-        watchedYTop = component.getY();
-        
-        watchedXCenter = component.getX() + (width / 2);
-        watchedYCenter = component.getY() + (width / 2);
-        
-        watchedXRight = component.getX() + width;
-        watchedYBottom = component.getY() + width;
+        addAndMakeVisible(point);
+        setSize(400, 300);
     }
-    int watchedXLeft;
-    int watchedYTop;
-    int watchedXCenter;
-    int watchedYCenter;
-    int watchedXRight;
-    int watchedYBottom;
-private:
-    DragNode* nodeToWatch;
-};
-
-class DragNodeContainer : public juce::Component
-{
-public:
-    DragNodeContainer(int ix, int iy, int iwidth, int iheight)
+    DraggerContainer(int xMinSet, int xMaxSet, int yMinSet, int yMaxSet)
     {
-        addAndMakeVisible(dragNode);
-        x = ix;
-        y = iy;
-        width = iwidth;
-        height = iheight;
-        setBounds(x, y, width, height);
-        dragNode.setBounds(x, y, height, height);
-        dragNode.setTopLeftPosition(0, 0);
+        addAndMakeVisible(point);
+        contMinX = xMinSet;
+        contMaxX = xMaxSet;
+        contMinY = yMinSet;
+        contMaxY = yMaxSet;
+        contWidth = contMaxX - contMinX;
+        contHeight = contMaxY - contMinY;
+        setBounds(contMinX, contMinY, contWidth, contHeight);
+        point.setBounds(contMinX, contMinY, contHeight, contHeight);
+        point.setTopLeftPosition(0, 0);
     }
-    ~DragNodeContainer()
+    ~DraggerContainer()
     {}
-    void reInit(int ix, int iy, int iwidth, int iheight)
+    void addPeer(DraggerContainer* peer, side limitSide)
     {
-        x = ix;
-        y = iy;
-        width = iwidth;
-        height = iheight;
-        setBounds(x, y, width, height);
-        dragNode.setBounds(x, y, height, height);
-        dragNode.setTopLeftPosition(0, 0);
-        setTopLeftPosition(x, y);
+        peerSide = limitSide;
+        switch(limitSide)
+        {
+            case top:
+                maxYFromPeer = &peerCont->point.bottomY;
+                lastMaxY = *maxYFromPeer;
+            case right:
+                maxXFromPeer = &peerCont->point.centerX;
+                lastMaxX = *maxXFromPeer;
+            case bottom:
+                minYFromPeer = &peerCont->point.topY;
+                lastMinY = *minYFromPeer;
+            case left:
+                minXFromPeer = &peerCont->point.centerX;
+                lastMinX = *minXFromPeer;
+        }
     }
-    void initNodePlacement()
+    void updateValsFromPtr()
     {
-        dragNode.setBounds(getX(), getY(), getHeight(), getHeight());
-        dragNode.setTopLeftPosition(0, 0);
+       lastMaxY = *maxYFromPeer;
+       lastMaxX = *maxXFromPeer;
+       lastMinY = *minYFromPeer;
+       lastMinX = *minXFromPeer;
     }
-    void setNodeColor(juce::Colour inputColor)
-    {
-        dragNode.assignColor(inputColor);
-    }
+    
     void paint(juce::Graphics &g) override
-    {
-        g.fillAll(juce::Colours::white);
+    {g.fillAll(juce::Colours::white);}
+    
+    void checkLimitUpdates()
+    {   int lastSetting;
+        int* settingSource;
+        switch(peerSide)
+        {
+            case top:
+            {
+                lastSetting = lastMaxY;
+                settingSource = maxYFromPeer;
+            }
+            case right:
+            {
+                lastSetting = lastMaxX;
+                settingSource = maxXFromPeer;
+            }
+            case bottom:
+            {
+                lastSetting = lastMinY;
+                settingSource = minYFromPeer;
+            }
+            case left:
+            {
+                lastSetting = lastMinX;
+                settingSource = minXFromPeer;
+            }
+        }
+        if(lastSetting != *settingSource)//checks whether the limit has changed since the last update
+        {
+            //run something to reset the bounds here
+            const char* limitSide = getSideName(peerSide);
+            printf("limit on the %s changed to %d\n", limitSide, *settingSource);
+            updateValsFromPtr(); //set the lastValues back to the pointer values
+        }
     }
-    int getXSetting()
+    void setChildColor(juce::Colour colorChoice)
     {
-        printf ("X set to: %d\n", dragNode.getCenterX() - x);
-        return (dragNode.getCenterX() - x);
+        point.assignColor(colorChoice);
     }
-    DragNode dragNode;
+    // public data member(s)
+    DragPoint point;
 private:
-    int xOutput;
-    int x, y, width, height;
+    DraggerContainer* peerCont;
+    side peerSide;
+    int contWidth, contHeight, contMinX, contMaxX, contMinY, contMaxY; //all the dimension points
+    int childX, childY; //top left corner of the DragPoint
+    //these store data from another DragContainer about what limits are imposed on this DragContainer
+    int* minXFromPeer;
+    int* maxXFromPeer;
+    int* minYFromPeer;
+    int* maxYFromPeer;
+    //these store the last saved limit from the peer and get checked against the pointers to see if anything has changed
+    int lastMinX, lastMaxX, lastMinY, lastMaxY;
 };
-
-
 
 
 
