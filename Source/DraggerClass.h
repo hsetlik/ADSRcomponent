@@ -3,10 +3,10 @@
 #include <JuceHeader.h>
 #include <stdio.h>
 
-class DragPointComponent : public juce::Component
+class DragNode : public juce::Component
 {
 public:
-    DragPointComponent()
+    DragNode()
     {
         int initSideLength = getParentHeight();
         sideLength = initSideLength;
@@ -21,7 +21,7 @@ public:
         constrainer.setMinimumOnscreenAmounts(0xffffff, 0xffffff, 0xffffff, 0xffffff);
         setTopLeftPosition(0, 0);
     }
-    ~DragPointComponent() override
+    ~DragNode() override
     {
     }
     void moved() override
@@ -66,22 +66,21 @@ private:
     juce::Colour setColor = juce::Colours::blue;
 };
 
-class DragPointContainer : public juce::Component
+class DragNodeContainer : public juce::Component
 {
 public:
-    DragPointContainer(int ix, int iy, int iwidth, int iheight)
+    DragNodeContainer(int ix, int iy, int iwidth, int iheight)
     {
-        addAndMakeVisible(dragger);
-        
+        addAndMakeVisible(dragNode);
         x = ix;
         y = iy;
         width = iwidth;
         height = iheight;
         setBounds(x, y, width, height);
-        dragger.setBounds(x, y, height, height);
-        dragger.setTopLeftPosition(0, 0);
+        dragNode.setBounds(x, y, height, height);
+        dragNode.setTopLeftPosition(0, 0);
     }
-    ~DragPointContainer()
+    ~DragNodeContainer()
     {}
     void reInit(int ix, int iy, int iwidth, int iheight)
     {
@@ -90,13 +89,22 @@ public:
         width = iwidth;
         height = iheight;
         setBounds(x, y, width, height);
-        dragger.setBounds(x, y, height, height);
-        dragger.setTopLeftPosition(0, 0);
+        dragNode.setBounds(x, y, height, height);
+        dragNode.setTopLeftPosition(0, 0);
         setTopLeftPosition(x, y);
+    }
+    void initNodePlacement()
+    {
+        dragNode.setBounds(getX(), getY(), getHeight(), getHeight());
+        dragNode.setTopLeftPosition(0, 0);
+    }
+    void setXPosFromSibling(int* xInput)
+    {
+        
     }
     void setNodeColor(juce::Colour inputColor)
     {
-        dragger.assignColor(inputColor);
+        dragNode.assignColor(inputColor);
     }
     void paint(juce::Graphics &g) override
     {
@@ -104,12 +112,13 @@ public:
     }
     int getXSetting()
     {
-        printf ("X set to: %d\n", dragger.getCenterX() - x);
-        return (dragger.getCenterX() - x);
+        printf ("X set to: %d\n", dragNode.getCenterX() - x);
+        return (dragNode.getCenterX() - x);
     }
 private:
+    int xOutput;
     int x, y, width, height;
-    DragPointComponent dragger;
+    DragNode dragNode;
 };
 
 

@@ -41,7 +41,8 @@ public:
         dragger2Y = Dragger1.getY() + (getHeight() / 6);
         dragger2W = getWidth() / 2;
         dragger2H = (int)draggerHeight;
-        Dragger2.reInit(dragger2X, dragger2Y, dragger2W, dragger2H);
+        Dragger2.setBounds(dragger2X, dragger2Y, dragger2W, dragger2H);
+        Dragger2.initNodePlacement();
     }
     ~DraggerGroup() override
     {
@@ -55,18 +56,15 @@ public:
     {
         mouseIsDown = false;
     }
-    
-    void mouseDrag(const juce::MouseEvent &event) override
-    {
-
-    }
     void resized() override
     {
         Dragger1.resized();
+        Dragger2.resized();
     }
 private:
-    DragPointContainer Dragger1, Dragger2;
+    DragNodeContainer Dragger1, Dragger2;
     float draggerHeight;
+    
     int dragger1X;
     int dragger1Y;
     int dragger1W;
