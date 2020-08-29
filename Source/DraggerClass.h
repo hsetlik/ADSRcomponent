@@ -69,21 +69,35 @@ private:
 class NodeWatcher : public juce::ComponentMovementWatcher
 {
 public:
-    NodeWatcher() : juce::ComponentMovementWatcher(nodeToWatch)
+    NodeWatcher(DragNode* chosenNode) : juce::ComponentMovementWatcher(chosenNode)
     {
         nodeToWatch = chosenNode;
     }
     ~NodeWatcher() {};
-    void setNode(DragNode* chosenNode)
+    void componentMovedOrResized(juce::Component &component, bool wasMoved, bool wasResized) override
     {
-        nodeToWatch = chosenNode;
+        juce::Rectangle<int> targetBounds = component.getBounds();
+        int width = targetBounds.getWidth();
+        watchedXLeft = component.getX();
+        watchedYTop = component.getY();
+        
+        watchedXCenter = component.getX() + (width / 2);
+        watchedYCenter = component.getY() + (width / 2);
+        
+        watchedXRight = component.getX() + width;
+        watchedYBottom = component.getY() + width;
     }
+    int watchedXLeft;
+    int watchedYTop;
+    int watchedXCenter;
+    int watchedYCenter;
+    int watchedXRight;
+    int watchedYBottom;
 private:
     DragNode* nodeToWatch;
 };
 
 class DragNodeContainer : public juce::Component
-                          
 {
 public:
     DragNodeContainer(int ix, int iy, int iwidth, int iheight)
@@ -114,10 +128,6 @@ public:
     {
         dragNode.setBounds(getX(), getY(), getHeight(), getHeight());
         dragNode.setTopLeftPosition(0, 0);
-    }
-    void setNodeToWatch(DragNode* chosenNode)
-    {
-        nodeToWatch = chosenNode;
     }
     void setNodeColor(juce::Colour inputColor)
     {
