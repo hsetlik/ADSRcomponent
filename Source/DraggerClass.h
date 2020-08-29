@@ -3,10 +3,10 @@
 #include <JuceHeader.h>
 #include <stdio.h>
 
-class DragComponent : public juce::Component
+class DragPointComponent : public juce::Component
 {
 public:
-    DragComponent()
+    DragPointComponent()
     {
         int initSideLength = getParentHeight();
         sideLength = initSideLength;
@@ -19,16 +19,22 @@ public:
                                   bounds.getWidth(),
                                   bounds.getHeight());
         constrainer.setMinimumOnscreenAmounts(0xffffff, 0xffffff, 0xffffff, 0xffffff);
-        printf("Start X: %d\n", getX());
-        printf("Start Y: %d\n", getY());
         setTopLeftPosition(0, 0);
     }
-    ~DragComponent() override
+    ~DragPointComponent() override
     {
     }
     void moved() override
     {
     
+    }
+    int getCenterX()
+    {
+        return getX() + (sideLength / 2);
+    }
+    int getCenterY()
+    {
+        return getY() + (sideLength / 2);
     }
     void resized() override
     {
@@ -37,17 +43,19 @@ public:
     }
     void paint(juce::Graphics& g) override
     {
-        g.fillAll(juce::Colours::blue);
+        g.fillAll(setColor);
     }
     void mouseDown(const juce::MouseEvent &event) override
     {
         dragger.startDraggingComponent(this, event);
-        printf("Second X: %d\n", getX());
-        printf("Second Y: %d\n", getY());
     }
     void mouseDrag(const juce::MouseEvent &event) override
     {
     dragger.dragComponent(this, event, &constrainer);
+    }
+    void assignColor(juce::Colour inputColor)
+    {
+        setColor = inputColor;
     }
     
 private:
@@ -55,12 +63,13 @@ private:
     int sideLength;
     juce::ComponentDragger dragger;
     juce::ComponentBoundsConstrainer constrainer;
+    juce::Colour setColor = juce::Colours::blue;
 };
 
-class DragRangeRect : public juce::Component
+class DragPointContainer : public juce::Component
 {
 public:
-    DragRangeRect(int ix, int iy, int iwidth, int iheight)
+    DragPointContainer(int ix, int iy, int iwidth, int iheight)
     {
         addAndMakeVisible(dragger);
         
@@ -72,7 +81,7 @@ public:
         dragger.setBounds(x, y, height, height);
         dragger.setTopLeftPosition(0, 0);
     }
-    ~DragRangeRect()
+    ~DragPointContainer()
     {}
     void reInit(int ix, int iy, int iwidth, int iheight)
     {
@@ -83,14 +92,24 @@ public:
         setBounds(x, y, width, height);
         dragger.setBounds(x, y, height, height);
         dragger.setTopLeftPosition(0, 0);
+        setTopLeftPosition(x, y);
+    }
+    void setNodeColor(juce::Colour inputColor)
+    {
+        dragger.assignColor(inputColor);
     }
     void paint(juce::Graphics &g) override
     {
         g.fillAll(juce::Colours::white);
     }
+    int getXSetting()
+    {
+        printf ("X set to: %d\n", dragger.getCenterX() - x);
+        return (dragger.getCenterX() - x);
+    }
 private:
     int x, y, width, height;
-    DragComponent dragger;
+    DragPointComponent dragger;
 };
 
 
