@@ -43,6 +43,8 @@ public:
         bottomY = getBottom();
         rightX = getRight();
     }
+    void updateCenterX() {centerX = getX() + (getHeight() / 2);}
+    void updateCenterY() {centerY = getY() + (getHeight() / 2);}
     void mouseDown(const juce::MouseEvent &event) override
     {
         dragger.startDraggingComponent(this, event);
@@ -112,7 +114,11 @@ public:
     ~DraggerContainer()
     {}
     
-    //this gets a third argument for index
+    void setChildColor(juce::Colour colorChoice)
+    {
+        point.assignColor(colorChoice);
+    }
+    //======functions for movement constraint
     void addPeer(DraggerContainer* peer, side limitSide)
     {
         limitingPoints.push_back(peerPoint(peer, limitSide));
@@ -139,7 +145,7 @@ public:
                     constrainedDim = limitingPoints[i].minYSource;
                     lastDimSetting = limitingPoints[i].lastMinY;
                     break;
-                case right: //maxX
+                case right:
                     constrainedDim = limitingPoints[i].maxXSource;
                     lastDimSetting = limitingPoints[i].lastMaxX;
                     break;
@@ -155,51 +161,49 @@ public:
             if(lastDimSetting != *constrainedDim)
             {
                 int newPos = *constrainedDim;
-                int xMinSet = point.getX();
-                int yMinSet = point.getY();
-                int xMaxSet = point.getRight();
-                int yMaxSet = point.getBottom();
-                int widthSet = point.getWidth();
-                int heightSet = point.getHeight();
+                //these will be the arguments to the call to setBounds() at the end of this function
+                //REMEMBER: getX() and getY() return the DIFFERENCE between the component's minimum and its parent's minimum
+                int destMinX = getX();
+                int destMinY = getY();
+                int destMaxX = getRight();
+                int destMaxY = getBottom();
+                int destWidth = getWidth();
+                int destHeight = getHeight();
+                //the switch changes the value of one of the above ints to the cooresponding value from the peerPoint
+                //note: width or height also needs to be updated each time a destMin/Max is changed
                 switch(fromSide)
                 {
                     case top:
-                        yMinSet = newPos;
-                        heightSet = yMaxSet - yMinSet;
+                        destMinY = newPos;
+                        /*minimum values need to account for the intitial position of the sourceContainer, or else they'll be offset from the screen's origin rather than the sourceContainer's origin*/
+                        destMinY += limitingPoints[i].sourceContainer->contMinY;
+                        destHeight = destMaxY - destMinY;
                         break;
                     case right:
-                        xMaxSet = newPos;
-                        widthSet = xMaxSet - xMinSet;
+                        destMaxX = newPos;
+                        destWidth = destMaxX - destMinX;
                         break;
                     case bottom:
-                        yMaxSet = newPos;
-                        heightSet = yMaxSet - yMinSet;
+                        destMaxY = newPos;
+                        destHeight = destMaxY - destMinY;
                         break;
                     case left:
-                        xMinSet = newPos;
-                        widthSet = xMaxSet - xMinSet;
+                        destMinX = newPos;
+                        destMinX += limitingPoints[i].sourceContainer->contMinX;
+                        destWidth = destMaxX - destMinX;
                         break;
                 }
-                setBounds(xMinSet, yMinSet, widthSet, heightSet);
+                setBounds(destMinX, destMinY, destWidth, destHeight);
             }
+            limitingPoints[i].updateLastPoints();
         }
     }
-    void setChildColor(juce::Colour colorChoice)
-    {
-        point.assignColor(colorChoice);
-    }
-    // public data member(s)
+    // public data member
     DragPoint point;
 private:
     DraggerContainer* peerCont1;
-    side peerSide1, peerSide2;
     int contWidth, contHeight, contMinX, contMaxX, contMinY, contMaxY; //all the dimension points
     int childX, childY; //top left corner of the DragPoint
-    //these store data from another DragContainer about what limits are imposed on this DragContainer
-    int* minXFromPeer1;
-    int* maxXFromPeer1;
-    int* minYFromPeer1;
-    int* maxYFromPeer1;
     class peerPoint
     {
         public:
@@ -215,6 +219,7 @@ private:
         ~peerPoint() {}
         void updateLastPoints()
         {
+            //sourceContainer->point.updateReturnPoints();
             lastMinX = *minXSource;
             lastMinY = *minYSource;
             lastMaxX = *maxXSource;
@@ -226,13 +231,12 @@ private:
         int* maxXSource;
         int* minYSource;
         int* maxYSource;
+        int* valToConstrain;
         int lastMinX, lastMaxX, lastMinY, lastMaxY;
         side sourceSide;
     };
+    
     std::vector<peerPoint> limitingPoints;
-    //these store the last saved limit from the peer and get checked against the pointers to see if anything has changed
-    int lastMinX1, lastMaxX1, lastMinY1, lastMaxY1;
-    int lastMinX2, lastMaxX2, lastMinY2, lastMaxY2;
 };
 
 

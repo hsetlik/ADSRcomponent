@@ -89,7 +89,7 @@ public:
 private:
     //==============================================================================
     // Your private member variables go here...
-    DraggerGroup envelope;
+    ADSRenv envelope;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };
