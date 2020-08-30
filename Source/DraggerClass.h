@@ -21,6 +21,7 @@ public:
         constrainer.setMinimumOnscreenAmounts(0xffffff, 0xffffff, 0xffffff, 0xffffff);
         setTopLeftPosition(0, 0);
         updateReturnPoints();
+        
     }
     ~DragPoint() override
     {}
@@ -64,7 +65,8 @@ private:
     juce::Colour setColor = juce::Colours::blue;
 };
 
-class DraggerContainer : public juce::Component
+class DraggerContainer : public juce::Component,
+public juce::ComponentListener
 {
 public:
     enum side {top, right, bottom, left};
@@ -89,18 +91,20 @@ public:
         addAndMakeVisible(point);
         setSize(400, 300);
     }
-    DraggerContainer(int xMinSet, int xMaxSet, int yMinSet, int yMaxSet)
+    DraggerContainer(int xMinSet, int yMinSet, int widthSet, int heightSet)
     {
         addAndMakeVisible(point);
         contMinX = xMinSet;
-        contMaxX = xMaxSet;
+        contMaxX = xMinSet + widthSet;
         contMinY = yMinSet;
-        contMaxY = yMaxSet;
-        contWidth = contMaxX - contMinX;
-        contHeight = contMaxY - contMinY;
+        contMaxY = yMinSet + heightSet;
+        contWidth = widthSet;
+        contHeight = heightSet;
         setBounds(contMinX, contMinY, contWidth, contHeight);
         point.setBounds(contMinX, contMinY, contHeight, contHeight);
         point.setTopLeftPosition(0, 0);
+        
+      
     }
     ~DraggerContainer()
     {}
@@ -114,24 +118,36 @@ public:
                 maxYFromPeer = &peerCont->point.bottomY;
                 lastMaxY = *maxYFromPeer;
             case right:
-                maxXFromPeer = &peerCont->point.centerX;
+                maxXFromPeer = &peerCont->point.leftX;
                 lastMaxX = *maxXFromPeer;
             case bottom:
                 minYFromPeer = &peerCont->point.topY;
                 lastMinY = *minYFromPeer;
             case left:
-                minXFromPeer = &peerCont->point.centerX;
+                minXFromPeer = &peerCont->point.rightX;
                 lastMinX = *minXFromPeer;
         }
+        peerCont->point.addComponentListener(this);
     }
     void updateValsFromPtr()
     {
-       lastMaxY = *maxYFromPeer;
-       lastMaxX = *maxXFromPeer;
-       lastMinY = *minYFromPeer;
-       lastMinX = *minXFromPeer;
+        switch(peerSide){
+                case top:
+                    lastMaxY = *maxYFromPeer;
+                case right:
+                    lastMaxX = *maxXFromPeer;
+                case bottom:
+                    lastMinY = *minYFromPeer;
+                case left:
+                    lastMinX = *minXFromPeer;
+        }
+       
     }
-    
+    void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override
+    {
+        printf("Peer DragPoint moved\n");
+        checkLimitUpdates();
+    }
     void paint(juce::Graphics &g) override
     {g.fillAll(juce::Colours::white);}
     
@@ -163,10 +179,32 @@ public:
         }
         if(lastSetting != *settingSource)//checks whether the limit has changed since the last update
         {
-            //run something to reset the bounds here
             const char* limitSide = getSideName(peerSide);
             printf("limit on the %s changed to %d\n", limitSide, *settingSource);
             updateValsFromPtr(); //set the lastValues back to the pointer values
+            switch(peerSide)
+            {
+                case top:
+                    lastSetting = *settingSource; //MaxY(), height gets limited
+                    contMaxY = lastSetting;
+                    contHeight = contMaxY - contMinY;
+                    setBounds(contMinX, contMinY, contWidth, contHeight);
+                case right:
+                        lastSetting = *settingSource; //MaxX, width gets limited
+                        contMaxX = lastSetting;
+                        contWidth = contMaxX - contMinX;
+                        setBounds(contMinX, contMinY, contWidth, contHeight);
+                case bottom:
+                    lastSetting = *settingSource; //MinY, height gets limited
+                    contMinY = lastSetting;
+                    contHeight = contMaxY - contMinY;
+                    setBounds(contMinX, contMinY, contWidth, contHeight);
+                case left:
+                    lastSetting = *settingSource; //MinX, width gets limited
+                    contMinX = lastSetting;
+                    contWidth = contMaxX - contMinX;
+                    setBounds(contMinX, contMinY, contWidth, contHeight);
+            }
         }
     }
     void setChildColor(juce::Colour colorChoice)
@@ -188,7 +226,6 @@ private:
     //these store the last saved limit from the peer and get checked against the pointers to see if anything has changed
     int lastMinX, lastMaxX, lastMinY, lastMaxY;
 };
-
 
 
 

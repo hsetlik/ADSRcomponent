@@ -18,12 +18,15 @@ public:
         //put the two sliders on and change their color to tell them apart
         addAndMakeVisible(cont1);
         addAndMakeVisible(cont2);
+        setBounds(0, 0, 400, 300);
+        
         cont2.setChildColor(juce::Colours::orange);
         //now to set up the limits for cont2
         cont2.addPeer(&cont1, DraggerContainer::left);
         
-        //just set the size...
-        setSize(400, 300);
+        
+        
+       
     }
     ~DraggerGroup()
     {
@@ -35,8 +38,10 @@ public:
     }
     void mouseDrag(const juce::MouseEvent &event) override
     {
+        printf("Mouse Dragging\n");
         cont2.checkLimitUpdates();
     }
 private:
     DraggerContainer cont1, cont2;
+    
 };
