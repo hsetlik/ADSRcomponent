@@ -11,11 +11,29 @@ public:
     DragPoint(direction chosenDirection)
     {
         mDir = chosenDirection;
-        int initSideLength = getParentHeight();
-        sideLength = initSideLength;
-        setSize(sideLength, sideLength);
-        float parentSideRatio = getParentWidth() / getParentHeight();
-        setBoundsRelative(0.0f, 0.0f, parentSideRatio, 1.0f);
+        //these ratios default for a horizontal dragger
+        
+        
+        switch(mDir)
+        {
+            case hor:
+                parentHeightRatio = 1.0f;
+                sideHeight = getParentHeight();
+                printf("horizontal side height: %d\n", sideHeight);
+                sideWidth = sideHeight;
+            case vert:
+                parentHeightRatio = 0.12f;
+                sideHeight = getParentHeight() / 12;
+                printf("sustain side height: %d\n", sideHeight);
+                parentWidthRatio = 1.0f;
+                sideWidth = getParentWidth();
+                printf("sustain side width: %d\n", sideWidth);
+        }
+        
+        
+        setSize(sideWidth, sideHeight);
+        
+        setBoundsRelative(0.0f, 0.0f, parentWidthRatio, parentHeightRatio);
         juce::Rectangle<int> bounds = getBoundsInParent().reduced(5);
         constrainer.setSizeLimits(bounds.getY(),
                                   bounds.getX(),
@@ -30,8 +48,18 @@ public:
     {}
     void resized() override
     {
-        sideLength = getParentHeight();
-        setSize(sideLength, sideLength);
+        
+        if(mDir == hor)
+        {
+            sideHeight = getParentHeight();
+            sideWidth = sideHeight;
+        }
+        else
+        {
+            sideWidth = getParentWidth() * parentWidthRatio;
+            sideHeight = getParentHeight() * parentHeightRatio;
+            setSize(sideWidth, sideHeight);
+        }
     }
     void paint(juce::Graphics& g) override
     {
@@ -65,10 +93,12 @@ public:
 private:
     direction mDir;
     bool firstDragLoop = true;
-    int sideLength;
+    int sideHeight, sideWidth;
     juce::ComponentDragger dragger;
     juce::ComponentBoundsConstrainer constrainer;
     juce::Colour setColor = juce::Colours::blue;
+    float parentWidthRatio;
+    float parentHeightRatio;
 };
 
 
