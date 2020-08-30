@@ -12,21 +12,27 @@
 class ADSRenv : public juce::Component
 {
 public:
-    ADSRenv() : attackDragger(30, 30, 80, 20),
-                decaySlider(30, 50, 100, 20)
+    ADSRenv() : attackDragger(30, 30, 80, 20, 20),
+                decaySlider(30, 30, 135, 100, 20),
+                releaseSlider(165, 30, 135, 100, 20)
+                
     {
         //put the two sliders on and change their color to tell them apart
         addAndMakeVisible(attackDragger);
         addAndMakeVisible(decaySlider);
+        addAndMakeVisible(releaseSlider);
+        
         setBounds(0, 0, 400, 300);
+        decaySlider.resetPointHome(25, 50);
+        releaseSlider.resetPointHome(25, 50);
         
         decaySlider.setChildColor(juce::Colours::orange);
-        //now to set up the limits for cont2
+        releaseSlider.setChildColor(juce::Colours::green);
         decaySlider.addPeer(&attackDragger, left);
+        decaySlider.addPeer(&releaseSlider, top);
+        releaseSlider.addPeer(&decaySlider, top);
         
         
-        
-       
     }
     ~ADSRenv()
     {
@@ -39,9 +45,8 @@ public:
     void mouseDrag(const juce::MouseEvent &event) override
     {
         printf("Mouse Dragging\n");
-        decaySlider.checkLimitUpdates();
     }
 private:
-    DraggerContainer attackDragger, decaySlider;
+    DraggerContainer attackDragger, decaySlider, releaseSlider;
     
 };

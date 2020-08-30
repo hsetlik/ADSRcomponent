@@ -6,9 +6,9 @@
 class DragPoint : public juce::Component
 {
 public:
-    DragPoint()
+    DragPoint(int height)
     {
-        int initSideLength = getParentHeight();
+        int initSideLength = height;
         sideLength = initSideLength;
         setSize(sideLength, sideLength);
         float parentSideRatio = getParentWidth() / getParentHeight();
@@ -27,7 +27,6 @@ public:
     {}
     void resized() override
     {
-        sideLength = getParentHeight();
         setSize(sideLength, sideLength);
     }
     void paint(juce::Graphics& g) override
@@ -48,6 +47,7 @@ public:
     void mouseDown(const juce::MouseEvent &event) override
     {
         dragger.startDraggingComponent(this, event);
+        
     }
     void mouseDrag(const juce::MouseEvent &event) override
     {
@@ -59,12 +59,12 @@ public:
         setColor = inputColor;
     }
     int centerX, centerY, leftX, rightX, topY, bottomY;
+    juce::Colour setColor = juce::Colours::blue;
 private:
     bool firstDragLoop = true;
     int sideLength;
     juce::ComponentDragger dragger;
     juce::ComponentBoundsConstrainer constrainer;
-    juce::Colour setColor = juce::Colours::blue;
 };
 
 
@@ -90,14 +90,7 @@ class DraggerContainer : public juce::Component,
 public juce::ComponentListener
 {
 public:
-    
-    
-    DraggerContainer()
-    {
-        addAndMakeVisible(point);
-        setSize(400, 300);
-    }
-    DraggerContainer(int xMinSet, int yMinSet, int widthSet, int heightSet)
+    DraggerContainer(int xMinSet, int yMinSet, int widthSet, int heightSet, int dragPointSide) : point(dragPointSide)
     {
         addAndMakeVisible(point);
         contMinX = xMinSet;
@@ -106,8 +99,9 @@ public:
         contMaxY = yMinSet + heightSet;
         contWidth = widthSet;
         contHeight = heightSet;
+        dragPointSize = dragPointSide;
         setBounds(contMinX, contMinY, contWidth, contHeight);
-        point.setBounds(contMinX, contMinY, contHeight, contHeight);
+        point.setBounds(contMinX, contMinY, dragPointSide, dragPointSide);
         point.setTopLeftPosition(0, 0);
       
     }
@@ -126,11 +120,21 @@ public:
     }
     void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override
     {
-        printf("Peer DragPoint moved\n");
+        //printf("Peer DragPoint moved\n");
         checkLimitUpdates();
     }
     void paint(juce::Graphics &g) override
-    {g.fillAll(juce::Colours::white);}
+    {
+        g.setColour(point.setColor);
+        juce::Rectangle<int> toDraw = getLocalBounds();
+        g.drawRect(toDraw, 1);
+    }
+    
+    void resetPointHome(int newX, int newY)
+    {
+        dragPointHome = juce::Point<int>(newX, newY);
+        point.setTopLeftPosition(dragPointHome);
+    }
     
     void checkLimitUpdates()
     {
@@ -181,6 +185,8 @@ public:
                         break;
                     case right:
                         destMaxX = newPos;
+                        printf("newRightLimit: %d\n", newPos);
+                        //destMaxX += limitingPoints[i].sourceContainer->contMaxX;
                         destWidth = destMaxX - destMinX;
                         break;
                     case bottom:
@@ -189,7 +195,9 @@ public:
                         break;
                     case left:
                         destMinX = newPos;
-                        destMinX += limitingPoints[i].sourceContainer->contMinX;
+                        int limitDim = limitingPoints[i].sourceContainer->contMinX;
+                        if((limitDim + newPos) < contMaxX)
+                            destMinX += limitDim;
                         destWidth = destMaxX - destMinX;
                         break;
                 }
@@ -201,8 +209,10 @@ public:
     // public data member
     DragPoint point;
 private:
+    juce::Point<int> dragPointHome = juce::Point<int>(0, 0);
     DraggerContainer* peerCont1;
     int contWidth, contHeight, contMinX, contMaxX, contMinY, contMaxY; //all the dimension points
+    int dragPointSize;
     int childX, childY; //top left corner of the DragPoint
     class peerPoint
     {
