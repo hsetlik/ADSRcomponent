@@ -1,7 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "DraggersOnly.h"
+#include "GraphicADSR.h"
 
 //==============================================================================
 /*
@@ -89,7 +89,7 @@ public:
 private:
     //==============================================================================
     // Your private member variables go here...
-    ADSRenv envelope;
+    GraphicADSR envelope;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };
