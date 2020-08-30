@@ -13,19 +13,18 @@ class ADSRenv : public juce::Component
 {
 private:
     DraggerContainer attackDragger, decayDragger, releaseDragger;
-    SustainContainer sustainDragger;
+   
 
 public:
     ADSRenv() : attackDragger(10, 10, 75, 12, hor),
                 decayDragger(10, 22, 225, 12, hor),
-                releaseDragger(210, 22, 90, 12, hor),
-                sustainDragger(&decayDragger.point, &releaseDragger.point)
+                releaseDragger(210, 22, 90, 12, hor)
     {
         
         addAndMakeVisible(attackDragger);
         addAndMakeVisible(decayDragger);
         addAndMakeVisible(releaseDragger);
-        addAndMakeVisible(sustainDragger);
+       
        
         setBounds(0, 0, 400, 300);
         
@@ -35,6 +34,7 @@ public:
         //sustainDragger.point.setHeightByInt(20);
         //now to set up the limits for cont2
         decayDragger.addPeer(&attackDragger, left);
+        decayDragger.addPeer(&releaseDragger, right);
        
         
        
