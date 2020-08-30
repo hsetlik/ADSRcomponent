@@ -7,32 +7,31 @@
 
 #pragma once
 #include <JuceHeader.h>
-#include "DraggerClass.h"
+#include "SustainDragger.h"
 
 class ADSRenv : public juce::Component
 {
 private:
-    DraggerContainer attackDragger, decayDragger, sustainDragger;
+    DraggerContainer attackDragger, decayDragger;
 
 public:
     ADSRenv() : attackDragger(10, 10, 75, 12, hor),
-                decayDragger(10, 22, 225, 12, hor),
-                sustainDragger(10, 0, 65, 300, vert)
+                decayDragger(10, 22, 225, 12, hor)
+                
     {
         //put the two sliders on and change their color to tell them apart
         addAndMakeVisible(attackDragger);
         addAndMakeVisible(decayDragger);
-        addAndMakeVisible(sustainDragger);
+       
         setBounds(0, 0, 400, 300);
         
         decayDragger.setChildColor(juce::Colours::orange);
-        sustainDragger.setChildColor(juce::Colours::pink);
+        
         //sustainDragger.point.setHeightByInt(20);
         //now to set up the limits for cont2
         decayDragger.addPeer(&attackDragger, left);
-        decayDragger.addPeer(&sustainDragger, top);
-        decayDragger.addPeer(&sustainDragger, bottom);
-        sustainDragger.addPeer(&decayDragger, left);
+       
+        
        
     }
     ~ADSRenv()
@@ -42,8 +41,6 @@ public:
     {
         attackDragger.resized();
         decayDragger.resized();
-        sustainDragger.resized();
-        
     }
     void mouseDrag(const juce::MouseEvent &event) override
     {
