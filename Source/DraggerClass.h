@@ -73,12 +73,13 @@ public:
     }
     void updateReturnPoints()
     {
-        leftX = getX();
-        topY = getY();
-        centerX = getX() + (getHeight() / 2);
-        centerY = getY() + (getHeight() / 2);
-        bottomY = getBottom();
-        rightX = getRight();
+        leftX = getScreenX();
+        topY = getScreenY();
+        centerX = getScreenX() + (getHeight() / 2);
+        centerY = getScreenY() + (getHeight() / 2);
+        bottomY = getScreenY() + getHeight();
+        rightX = getScreenX() + getHeight();
+        printf("vertical Sides: %d, %d\n", leftX, rightX);
     }
     void updateCenterX() {centerX = getX() + (getHeight() / 2);}
     void updateCenterY() {centerY = getY() + (getHeight() / 2);}
@@ -158,7 +159,7 @@ public:
     }
     void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override
     {
-        printf("Peer DragPoint moved\n");
+        //printf("Peer DragPoint moved\n");
         checkLimitUpdates();
     }
     void paint(juce::Graphics &g) override
