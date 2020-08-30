@@ -12,9 +12,9 @@
 class ADSRenv : public juce::Component
 {
 public:
-    ADSRenv() : attackDragger(30, 30, 80, 20),
-                decaySlider(30, 50, 100, 20),
-                sustainSlider(130, 0, 80, 300)
+    ADSRenv() : attackDragger(30, 30, 80, 20, horizontal),
+                decaySlider(30, 50, 100, 20, horizontal),
+                sustainSlider(130, 0, 80, 300, vertical)
     {
         //put the two sliders on and change their color to tell them apart
         addAndMakeVisible(attackDragger);
@@ -27,9 +27,6 @@ public:
         //now to set up the limits for cont2
         decaySlider.addPeer(&attackDragger, left);
         
-        
-        
-       
     }
     ~ADSRenv()
     {

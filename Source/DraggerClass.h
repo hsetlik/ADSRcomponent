@@ -3,16 +3,34 @@
 
 #include <stdio.h>
 
+enum orientation {horizontal, vertical};
+
 class DragPoint : public juce::Component
 {
 public:
-    DragPoint()
+    DragPoint(orientation orientationChoice)
     {
-        int initSideLength = getParentHeight();
-        sideLength = initSideLength;
-        setSize(sideLength, sideLength);
-        float parentSideRatio = getParentWidth() / getParentHeight();
-        setBoundsRelative(0.0f, 0.0f, parentSideRatio, 1.0f);
+        mOrientation = orientationChoice;
+        float widthFactor;
+        float heightFactor;
+        switch(mOrientation)
+        {
+            case horizontal:
+                sideHeight = getParentHeight();
+                sideWidth = sideHeight;
+                widthFactor = getParentWidth() / getParentHeight();
+                heightFactor = 1.0f;
+            case vertical:
+                sideHeight = getParentHeight() / 10;
+                sideWidth = getParentWidth();
+                widthFactor = 1.0f;
+                heightFactor = getParentHeight() / getParentWidth();
+        }
+        
+        //sideLength = initSideLength;
+        setSize(sideWidth, sideHeight);
+        
+        setBoundsRelative(0.0f, 0.0f, widthFactor, heightFactor);
         juce::Rectangle<int> bounds = getBoundsInParent().reduced(5);
         constrainer.setSizeLimits(bounds.getY(),
                                   bounds.getX(),
@@ -21,14 +39,13 @@ public:
         constrainer.setMinimumOnscreenAmounts(0xffffff, 0xffffff, 0xffffff, 0xffffff);
         setTopLeftPosition(0, 0);
         updateReturnPoints();
-        
     }
     ~DragPoint() override
     {}
     void resized() override
     {
-        sideLength = getParentHeight();
-        setSize(sideLength, sideLength);
+        sideHeight = getParentHeight();
+        setSize(sideWidth, sideHeight);
     }
     void paint(juce::Graphics& g) override
     {
@@ -60,8 +77,9 @@ public:
     }
     int centerX, centerY, leftX, rightX, topY, bottomY;
 private:
+    orientation mOrientation;
     bool firstDragLoop = true;
-    int sideLength;
+    int sideHeight, sideWidth;
     juce::ComponentDragger dragger;
     juce::ComponentBoundsConstrainer constrainer;
     juce::Colour setColor = juce::Colours::blue;
@@ -90,14 +108,7 @@ class DraggerContainer : public juce::Component,
 public juce::ComponentListener
 {
 public:
-    
-    
-    DraggerContainer()
-    {
-        addAndMakeVisible(point);
-        setSize(400, 300);
-    }
-    DraggerContainer(int xMinSet, int yMinSet, int widthSet, int heightSet)
+    DraggerContainer(int xMinSet, int yMinSet, int widthSet, int heightSet, orientation dragDirection) : point(dragDirection)
     {
         addAndMakeVisible(point);
         contMinX = xMinSet;
