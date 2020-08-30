@@ -39,14 +39,17 @@ public:
     }
     void resized() override
     {
-        attackDragger.resized();
-        decayDragger.resized();
-        sustainDragger.resized();
+       
+        
         
     }
     void mouseDrag(const juce::MouseEvent &event) override
     {
         //decayDragger.checkLimitUpdates();
     }
+private:
+    DraggerContainer attackDragger;
+    DraggerContainer decaySlider;
+    DraggerContainer releaseSlider;
 
 };
