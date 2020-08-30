@@ -22,8 +22,8 @@ public:
                 printf("horizontal side height: %d\n", sideHeight);
                 sideWidth = sideHeight;
             case vert:
-                parentHeightRatio = 0.12f;
-                sideHeight = getParentHeight() / 12;
+                parentHeightRatio = (float)(1.0 / 25.0);
+                sideHeight = getParentHeight() * parentHeightRatio;
                 printf("sustain side height: %d\n", sideHeight);
                 parentWidthRatio = 1.0f;
                 sideWidth = getParentWidth();

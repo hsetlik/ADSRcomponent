@@ -11,10 +11,13 @@
 
 class ADSRenv : public juce::Component
 {
+private:
+    DraggerContainer attackDragger, decayDragger, sustainDragger;
+
 public:
-    ADSRenv() : attackDragger(30, 30, 80, 20, hor),
-                decayDragger(30, 50, 100, 20, hor),
-                sustainDragger(130, 0, 80, 300, vert)
+    ADSRenv() : attackDragger(10, 10, 75, 12, hor),
+                decayDragger(10, 22, 225, 12, hor),
+                sustainDragger(10 + 225, 0, 225, 300, vert)
     {
         //put the two sliders on and change their color to tell them apart
         addAndMakeVisible(attackDragger);
@@ -46,7 +49,5 @@ public:
         printf("Mouse Dragging\n");
         decayDragger.checkLimitUpdates();
     }
-private:
-    DraggerContainer attackDragger, decayDragger, sustainDragger;
-    
+
 };
