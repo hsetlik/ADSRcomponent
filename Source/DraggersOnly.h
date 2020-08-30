@@ -24,13 +24,11 @@ public:
         
         decayDragger.setChildColor(juce::Colours::orange);
         sustainDragger.setChildColor(juce::Colours::pink);
+        //sustainDragger.point.setHeightByInt(20);
         //now to set up the limits for cont2
         decayDragger.addPeer(&attackDragger, left);
         decayDragger.addPeer(&sustainDragger, top);
         decayDragger.addPeer(&sustainDragger, bottom);
-        
-        
-        
        
     }
     ~ADSRenv()

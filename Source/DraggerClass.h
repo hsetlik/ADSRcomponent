@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 enum direction{hor, vert};
-
+//===========================================
 class DragPoint : public juce::Component
 {
 public:
@@ -61,6 +61,12 @@ public:
             setSize(sideWidth, sideHeight);
         }
     }
+    void setHeightByInt(int setting)
+    {
+        sideHeight = setting;
+        parentHeightRatio = (float) getParentHeight() / setting;
+        setSize(sideWidth, sideHeight);
+    }
     void paint(juce::Graphics& g) override
     {
         g.fillAll(setColor);
@@ -90,18 +96,17 @@ public:
         setColor = inputColor;
     }
     int centerX, centerY, leftX, rightX, topY, bottomY;
+    int sideHeight, sideWidth;
+    float parentWidthRatio;
+    float parentHeightRatio;
 private:
     direction mDir;
     bool firstDragLoop = true;
-    int sideHeight, sideWidth;
     juce::ComponentDragger dragger;
     juce::ComponentBoundsConstrainer constrainer;
     juce::Colour setColor = juce::Colours::blue;
-    float parentWidthRatio;
-    float parentHeightRatio;
 };
-
-
+//=====================================================
 enum side {top, right, bottom, left};
 
 const char* getSideName(side enumVal)
@@ -119,7 +124,7 @@ const char* getSideName(side enumVal)
     }
 }
 
-
+//===================================================
 class DraggerContainer : public juce::Component,
 public juce::ComponentListener
 {
