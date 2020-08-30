@@ -40,8 +40,8 @@ public:
         topY = getY();
         centerX = getX() + (getHeight() / 2);
         centerY = getY() + (getHeight() / 2);
-        bottomY = getY() + getHeight();
-        rightX = getX() + getHeight();
+        bottomY = getBottom();
+        rightX = getRight();
     }
     void mouseDown(const juce::MouseEvent &event) override
     {
@@ -65,26 +65,30 @@ private:
     juce::Colour setColor = juce::Colours::blue;
 };
 
+
+enum side {top, right, bottom, left};
+
+const char* getSideName(side enumVal)
+{
+    switch(enumVal)
+    {
+        case top:
+            return "top";
+        case right:
+            return "right";
+        case bottom:
+            return "bottom";
+        case left:
+            return "left";
+    }
+}
+
+
 class DraggerContainer : public juce::Component,
 public juce::ComponentListener
 {
 public:
-    enum side {top, right, bottom, left};
     
-    const char* getSideName(side enumVal)
-    {
-        switch(enumVal)
-        {
-            case top:
-                return "top";
-            case right:
-                return "right";
-            case bottom:
-                return "bottom";
-            case left:
-                return "left";
-        }
-    }
     
     DraggerContainer()
     {
@@ -107,40 +111,12 @@ public:
     }
     ~DraggerContainer()
     {}
-    void addPeer1(DraggerContainer* peer, side limitSide)
+    
+    //this gets a third argument for index
+    void addPeer(DraggerContainer* peer, side limitSide)
     {
-        peerSide1 = limitSide;
-        peerCont1 = peer;
-        switch(limitSide)
-        {
-            case top:
-                maxYFromPeer1 = &peerCont1->point.bottomY;
-                lastMaxY1 = *maxYFromPeer1;
-            case right:
-                maxXFromPeer1 = &peerCont1->point.leftX;
-                lastMaxX1 = *maxXFromPeer1;
-            case bottom:
-                minYFromPeer1 = &peerCont1->point.topY;
-                lastMinY1 = *minYFromPeer1;
-            case left:
-                minXFromPeer1 = &peerCont1->point.rightX;
-                lastMinX1 = *minXFromPeer1;
-        }
-        peerCont1->point.addComponentListener(this);
-    }
-    void updateValsFromPtr()
-    {
-        switch(peerSide1){
-                case top:
-                    lastMaxY1 = *maxYFromPeer1;
-                case right:
-                    lastMaxX1 = *maxXFromPeer1;
-                case bottom:
-                    lastMinY1 = *minYFromPeer1;
-                case left:
-                    lastMinX1 = *minXFromPeer1;
-        }
-       
+        limitingPoints.push_back(peerPoint(peer, limitSide));
+        peer->point.addComponentListener(this);
     }
     void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override
     {
@@ -151,58 +127,60 @@ public:
     {g.fillAll(juce::Colours::white);}
     
     void checkLimitUpdates()
-    {   int lastSetting;
-        int* settingSource;
-        switch(peerSide1)
+    {
+        for(int i = 0; i < limitingPoints.size(); ++i)
         {
-            case top:
+            auto fromSide = limitingPoints[i].sourceSide;
+            int lastDimSetting;
+            int* constrainedDim;
+            switch(fromSide)
             {
-                lastSetting = lastMaxY1;
-                settingSource = maxYFromPeer1;
-            }
-            case right:
-            {
-                lastSetting = lastMaxX1;
-                settingSource = maxXFromPeer1;
-            }
-            case bottom:
-            {
-                lastSetting = lastMinY1;
-                settingSource = minYFromPeer1;
-            }
-            case left:
-            {
-                lastSetting = lastMinX1;
-                settingSource = minXFromPeer1;
-            }
-        }
-        if(lastSetting != *settingSource)//checks whether the limit has changed since the last update
-        {
-            const char* limitSide = getSideName(peerSide1);
-            printf("limit on the %s changed to %d\n", limitSide, *settingSource);
-            updateValsFromPtr(); //set the lastValues back to the pointer values
-            switch(peerSide1)
-            {
-                case top:
-                    lastSetting = *settingSource; //MaxY(), height gets limited
-                    contMaxY = lastSetting;
-                    contHeight = contMaxY - contMinY;
-                    setBounds(contMinX, contMinY, contWidth, contHeight);
-                case right:
-                        lastSetting = *settingSource; //MaxX, width gets limited
-                        contMaxX = lastSetting;
-                        contWidth = contMaxX - contMinX;
-                        setBounds(contMinX, contMinY, contWidth, contHeight);
+                case top: // minY & height are limited
+                    constrainedDim = limitingPoints[i].minYSource;
+                    lastDimSetting = limitingPoints[i].lastMinY;
+                    break;
+                case right: //maxX
+                    constrainedDim = limitingPoints[i].maxXSource;
+                    lastDimSetting = limitingPoints[i].lastMaxX;
+                    break;
                 case bottom:
-                    lastSetting = *settingSource; //MinY, height gets limited
-                    contMinY = lastSetting;
-                    contHeight = contMaxY - contMinY;
-                    setBounds(contMinX, contMinY, contWidth, contHeight);
+                    constrainedDim = limitingPoints[i].maxYSource;
+                    lastDimSetting = limitingPoints[i].lastMaxY;
+                    break;
                 case left:
-                    lastSetting = *settingSource; //MinX, width gets limited
-                    contMinX = lastSetting;
-                    contWidth = contMaxX - contMinX;
-                    setBounds(contMinX, contMinY, contWidth, contHeight);
+                    constrainedDim = limitingPoints[i].minXSource;
+                    lastDimSetting = limitingPoints[i].lastMinX;
+                    break;
+            }
+            if(lastDimSetting != *constrainedDim)
+            {
+                int newPos = *constrainedDim;
+                int xMinSet = point.getX();
+                int yMinSet = point.getY();
+                int xMaxSet = point.getRight();
+                int yMaxSet = point.getBottom();
+                int widthSet = point.getWidth();
+                int heightSet = point.getHeight();
+                switch(fromSide)
+                {
+                    case top:
+                        yMinSet = newPos;
+                        heightSet = yMaxSet - yMinSet;
+                        break;
+                    case right:
+                        xMaxSet = newPos;
+                        widthSet = xMaxSet - xMinSet;
+                        break;
+                    case bottom:
+                        yMaxSet = newPos;
+                        heightSet = yMaxSet - yMinSet;
+                        break;
+                    case left:
+                        xMinSet = newPos;
+                        widthSet = xMaxSet - xMinSet;
+                        break;
+                }
+                setBounds(xMinSet, yMinSet, widthSet, heightSet);
             }
         }
     }
@@ -222,14 +200,39 @@ private:
     int* maxXFromPeer1;
     int* minYFromPeer1;
     int* maxYFromPeer1;
-    
+    class peerPoint
+    {
+        public:
+        peerPoint(DraggerContainer* source, side onSide)
+        {
+            sourceContainer = source;
+            sourceSide = onSide;
+            minXSource = &sourceContainer->point.leftX;
+            minYSource = &sourceContainer->point.topY;
+            maxXSource = &sourceContainer->point.rightX;
+            maxYSource = &sourceContainer->point.bottomY;
+        }
+        ~peerPoint() {}
+        void updateLastPoints()
+        {
+            lastMinX = *minXSource;
+            lastMinY = *minYSource;
+            lastMaxX = *maxXSource;
+            lastMaxY = *maxYSource;
+        }
+        //data members
+        DraggerContainer* sourceContainer;
+        int* minXSource;
+        int* maxXSource;
+        int* minYSource;
+        int* maxYSource;
+        int lastMinX, lastMaxX, lastMinY, lastMaxY;
+        side sourceSide;
+    };
+    std::vector<peerPoint> limitingPoints;
     //these store the last saved limit from the peer and get checked against the pointers to see if anything has changed
     int lastMinX1, lastMaxX1, lastMinY1, lastMaxY1;
     int lastMinX2, lastMaxX2, lastMinY2, lastMaxY2;
 };
 
 
-class peerConstraint
-{
-    
-};

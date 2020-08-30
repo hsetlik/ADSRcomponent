@@ -22,7 +22,7 @@ public:
         
         cont2.setChildColor(juce::Colours::orange);
         //now to set up the limits for cont2
-        cont2.addPeer1(&cont1, DraggerContainer::left);
+        cont2.addPeer(&cont1, DraggerContainer::left);
         
         
         
