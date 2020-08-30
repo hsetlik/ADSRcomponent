@@ -8,32 +8,13 @@ enum direction{hor, vert};
 class DragPoint : public juce::Component
 {
 public:
-    DragPoint(direction chosenDirection)
+    DragPoint(int height)
     {
-        mDir = chosenDirection;
-        //these ratios default for a horizontal dragger
-        
-        
-        switch(mDir)
-        {
-            case hor:
-                parentHeightRatio = 1.0f;
-                sideHeight = getParentHeight();
-                printf("horizontal side height: %d\n", sideHeight);
-                sideWidth = sideHeight;
-            case vert:
-                parentHeightRatio = (float)(1.0 / 25.0);
-                sideHeight = getParentHeight() * parentHeightRatio;
-                printf("sustain side height: %d\n", sideHeight);
-                parentWidthRatio = 1.0f;
-                sideWidth = getParentWidth();
-                printf("sustain side width: %d\n", sideWidth);
-        }
-        
-        
-        setSize(sideWidth, sideHeight);
-        
-        setBoundsRelative(0.0f, 0.0f, parentWidthRatio, parentHeightRatio);
+        int initSideLength = height;
+        sideLength = initSideLength;
+        setSize(sideLength, sideLength);
+        float parentSideRatio = getParentWidth() / getParentHeight();
+        setBoundsRelative(0.0f, 0.0f, parentSideRatio, 1.0f);
         juce::Rectangle<int> bounds = getBoundsInParent().reduced(5);
         constrainer.setSizeLimits(bounds.getY(),
                                   bounds.getX(),
@@ -48,24 +29,7 @@ public:
     {}
     void resized() override
     {
-        
-        if(mDir == hor)
-        {
-            sideHeight = getParentHeight();
-            sideWidth = sideHeight;
-        }
-        else
-        {
-            sideWidth = getParentWidth() * parentWidthRatio;
-            sideHeight = getParentHeight() * parentHeightRatio;
-            setSize(sideWidth, sideHeight);
-        }
-    }
-    void setHeightByInt(int setting)
-    {
-        sideHeight = setting;
-        parentHeightRatio = (float) getParentHeight() / setting;
-        setSize(sideWidth, sideHeight);
+        setSize(sideLength, sideLength);
     }
     void paint(juce::Graphics& g) override
     {
@@ -85,6 +49,7 @@ public:
     void mouseDown(const juce::MouseEvent &event) override
     {
         dragger.startDraggingComponent(this, event);
+        
     }
     void mouseDrag(const juce::MouseEvent &event) override
     {
@@ -96,15 +61,12 @@ public:
         setColor = inputColor;
     }
     int centerX, centerY, leftX, rightX, topY, bottomY;
-    int sideHeight, sideWidth;
-    float parentWidthRatio;
-    float parentHeightRatio;
+    juce::Colour setColor = juce::Colours::blue;
 private:
-    direction mDir;
     bool firstDragLoop = true;
+    int sideLength;
     juce::ComponentDragger dragger;
     juce::ComponentBoundsConstrainer constrainer;
-    juce::Colour setColor = juce::Colours::blue;
 };
 //=====================================================
 enum side {top, right, bottom, left};
@@ -129,7 +91,7 @@ class DraggerContainer : public juce::Component,
 public juce::ComponentListener
 {
 public:
-    DraggerContainer(int xMinSet, int yMinSet, int widthSet, int heightSet, direction dirChoice) : point(dirChoice)
+    DraggerContainer(int xMinSet, int yMinSet, int widthSet, int heightSet, int dragPointSide) : point(dragPointSide)
     {
         addAndMakeVisible(point);
         contMinX = xMinSet;
@@ -138,8 +100,9 @@ public:
         contMaxY = yMinSet + heightSet;
         contWidth = widthSet;
         contHeight = heightSet;
+        dragPointSize = dragPointSide;
         setBounds(contMinX, contMinY, contWidth, contHeight);
-        point.setBounds(contMinX, contMinY, contHeight, contHeight);
+        point.setBounds(contMinX, contMinY, dragPointSide, dragPointSide);
         point.setTopLeftPosition(0, 0);
       
     }
@@ -158,11 +121,21 @@ public:
     }
     void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override
     {
-        printf("Peer DragPoint moved\n");
+        //printf("Peer DragPoint moved\n");
         checkLimitUpdates();
     }
     void paint(juce::Graphics &g) override
-    {g.fillAll(juce::Colours::white);}
+    {
+        g.setColour(point.setColor);
+        juce::Rectangle<int> toDraw = getLocalBounds();
+        g.drawRect(toDraw, 1);
+    }
+    
+    void resetPointHome(int newX, int newY)
+    {
+        dragPointHome = juce::Point<int>(newX, newY);
+        point.setTopLeftPosition(dragPointHome);
+    }
     
     void checkLimitUpdates()
     {
@@ -213,6 +186,8 @@ public:
                         break;
                     case right:
                         destMaxX = newPos;
+                        printf("newRightLimit: %d\n", newPos);
+                        //destMaxX += limitingPoints[i].sourceContainer->contMaxX;
                         destWidth = destMaxX - destMinX;
                         break;
                     case bottom:
@@ -221,7 +196,9 @@ public:
                         break;
                     case left:
                         destMinX = newPos;
-                        destMinX += limitingPoints[i].sourceContainer->contMinX;
+                        int limitDim = limitingPoints[i].sourceContainer->contMinX;
+                        if((limitDim + newPos) < contMaxX)
+                            destMinX += limitDim;
                         destWidth = destMaxX - destMinX;
                         break;
                 }
@@ -233,8 +210,10 @@ public:
     // public data member
     DragPoint point;
 private:
+    juce::Point<int> dragPointHome = juce::Point<int>(0, 0);
     DraggerContainer* peerCont1;
     int contWidth, contHeight, contMinX, contMaxX, contMinY, contMaxY; //all the dimension points
+    int dragPointSize;
     int childX, childY; //top left corner of the DragPoint
     class peerPoint
     {
