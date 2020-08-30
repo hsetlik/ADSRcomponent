@@ -3,11 +3,14 @@
 
 #include <stdio.h>
 
+enum direction{hor, vert};
+
 class DragPoint : public juce::Component
 {
 public:
-    DragPoint()
+    DragPoint(direction chosenDirection)
     {
+        mDir = chosenDirection;
         int initSideLength = getParentHeight();
         sideLength = initSideLength;
         setSize(sideLength, sideLength);
@@ -60,6 +63,7 @@ public:
     }
     int centerX, centerY, leftX, rightX, topY, bottomY;
 private:
+    direction mDir;
     bool firstDragLoop = true;
     int sideLength;
     juce::ComponentDragger dragger;
@@ -90,14 +94,7 @@ class DraggerContainer : public juce::Component,
 public juce::ComponentListener
 {
 public:
-    
-    
-    DraggerContainer()
-    {
-        addAndMakeVisible(point);
-        setSize(400, 300);
-    }
-    DraggerContainer(int xMinSet, int yMinSet, int widthSet, int heightSet)
+    DraggerContainer(int xMinSet, int yMinSet, int widthSet, int heightSet, direction dirChoice) : point(dirChoice)
     {
         addAndMakeVisible(point);
         contMinX = xMinSet;

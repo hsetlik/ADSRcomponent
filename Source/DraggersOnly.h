@@ -12,9 +12,9 @@
 class ADSRenv : public juce::Component
 {
 public:
-    ADSRenv() : attackDragger(30, 30, 80, 20),
-                decaySlider(30, 50, 100, 20),
-                sustainSlider(130, 0, 80, 300)
+    ADSRenv() : attackDragger(30, 30, 80, 20, hor),
+                decaySlider(30, 50, 100, 20, hor),
+                sustainSlider(130, 0, 80, 300, vert)
     {
         //put the two sliders on and change their color to tell them apart
         addAndMakeVisible(attackDragger);
