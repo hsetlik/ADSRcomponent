@@ -17,7 +17,7 @@ private:
 public:
     ADSRenv() : attackDragger(10, 10, 75, 12, hor),
                 decayDragger(10, 22, 225, 12, hor),
-                sustainDragger(10 + 225, 0, 225, 300, vert)
+                sustainDragger(10, 0, 65, 300, vert)
     {
         //put the two sliders on and change their color to tell them apart
         addAndMakeVisible(attackDragger);
@@ -32,6 +32,7 @@ public:
         decayDragger.addPeer(&attackDragger, left);
         decayDragger.addPeer(&sustainDragger, top);
         decayDragger.addPeer(&sustainDragger, bottom);
+        sustainDragger.addPeer(&decayDragger, left);
        
     }
     ~ADSRenv()
@@ -46,8 +47,7 @@ public:
     }
     void mouseDrag(const juce::MouseEvent &event) override
     {
-        printf("Mouse Dragging\n");
-        decayDragger.checkLimitUpdates();
+        //decayDragger.checkLimitUpdates();
     }
 
 };
