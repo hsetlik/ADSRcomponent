@@ -37,12 +37,13 @@ public:
     }
     void updateReturnPoints()
     {
-        leftX = getX();
-        topY = getY();
-        centerX = getX() + (getHeight() / 2);
-        centerY = getY() + (getHeight() / 2);
-        bottomY = getBottom();
-        rightX = getRight();
+        juce::Rectangle<int> updatedBounds = getBoundsInParent();
+        leftX = updatedBounds.getX();
+        topY = updatedBounds.getY();
+        centerX = leftX + (updatedBounds.getWidth() / 2);
+        centerY = topY + (updatedBounds.getHeight() / 2);
+        bottomY = topY + updatedBounds.getHeight();
+        rightX = leftX + updatedBounds.getWidth();
     }
     void updateCenterX() {centerX = getX() + (getHeight() / 2);}
     void updateCenterY() {centerY = getY() + (getHeight() / 2);}
@@ -142,6 +143,7 @@ public:
         for(int i = 0; i < limitingPoints.size(); ++i)
         {
             auto fromSide = limitingPoints[i].sourceSide;
+            limitingPoints[i].sourceContainer->point.updateReturnPoints();
             int lastDimSetting;
             int* constrainedDim;
             switch(fromSide)

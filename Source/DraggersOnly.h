@@ -9,18 +9,19 @@
 #include <JuceHeader.h>
 #include "DraggerClass.h"
 
-class ADSRenv : public juce::Component
+class ADSRenv : public juce::Component, public juce::ComponentListener
 {
 public:
     ADSRenv() : attackDragger(30, 30, 80, 20, 20),
-                decayDragger(30, 30, 135, 100, 20),
-                releaseDragger(165, 30, 135, 100, 20)
+                decayDragger(30, 50, 135, 100, 20),
+                releaseDragger(165, 50, 135, 100, 20)
                 
     {
-        //put the two sliders on and change their color to tell them apart
         addAndMakeVisible(attackDragger);
         addAndMakeVisible(decayDragger);
         addAndMakeVisible(releaseDragger);
+        decayDragger.addComponentListener(this);
+        releaseDragger.addComponentListener(this);
         
         setBounds(0, 0, 400, 300);
         decayDragger.resetPointHome(25, 50);
@@ -42,8 +43,11 @@ public:
     void resized() override
     {
        
-        
-        
+    }
+    void componentMovedOrResized(juce::Component& component, bool wasMoved, bool wasResized) override
+    {
+        decayDragger.checkLimitUpdates();
+        releaseDragger.checkLimitUpdates();
     }
     void mouseDrag(const juce::MouseEvent &event) override
     {
