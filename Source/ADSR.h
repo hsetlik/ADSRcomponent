@@ -10,7 +10,6 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "maximilian.h"
 #include <stdio.h>
 #include "DraggerClass.h"
 
